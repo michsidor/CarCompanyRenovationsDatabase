@@ -165,7 +165,8 @@ CREATE PROCEDURE renovation_managment_system.AddingValues_if2 ()
 BEGIN
 INSERT INTO industrial_hall_data(industrial_hall_token)
 SELECT CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-2') as Wynik
-FROM car_company_data;
+FROM car_company_data
+WHERE num_of_industrial_halls > 1;
 END//
 DELIMITER ;
 
@@ -174,7 +175,8 @@ CREATE PROCEDURE renovation_managment_system.AddingValues_if3 ()
 BEGIN
 INSERT INTO industrial_hall_data(industrial_hall_token)
 SELECT CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-3') as Wynik
-FROM car_company_data;
+FROM car_company_data
+WHERE num_of_industrial_halls > 2;
 END//
 DELIMITER ;
 
@@ -183,15 +185,15 @@ CREATE PROCEDURE renovation_managment_system.AddingValues_if4 ()
 BEGIN
 INSERT INTO industrial_hall_data(industrial_hall_token)
 SELECT CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-4') as Wynik
-FROM car_company_data;
+FROM car_company_data
+WHERE num_of_industrial_halls > 3;
 END//
 DELIMITER ;
--- ---------------------------------------------------------------------------- -- 
 
 Call renovation_managment_system.AddingValues_if1();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
 Call renovation_managment_system.AddingValues_if2();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
 Call renovation_managment_system.AddingValues_if3();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
 Call renovation_managment_system.AddingValues_if4();
+
+UPDATE industrial_hall_data
+SET industrial_hall_token = UPPER(industrial_hall_token);
