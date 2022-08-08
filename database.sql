@@ -8,20 +8,25 @@ DROP TABLE IF EXISTS Renovation_Managment_System.Supervisior_Data;
 
 DROP DATABASE IF EXISTS Renovation_Managment_System;
 
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if1;
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if2;
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if3;
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if4;
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueArea;
-DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager;
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if1; -- 1
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if2; -- 2
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if3; -- 3
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if4; -- 4
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueArea; -- 5
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager; -- 6
 
+DROP VIEW IF EXISTS renovation_managment_system.manager_company_view; -- 1
+DROP VIEW IF EXISTS renovation_managment_system.deputy_manager_harder_task; -- 2
+DROP VIEW IF EXISTS renovation_managment_system.InformationVolkswagen; -- 3
+DROP VIEW IF EXISTS renovation_managment_system.InformationBMW; -- 4
+DROP VIEW IF EXISTS renovation_managment_system.InformationMitsubishi; -- 5
 
 CREATE DATABASE Renovation_Managment_System;
-
+USE Renovation_Managment_System; -- we do not have to use f.e.: Renovation_Managment_System.Manager
 
 -- 29 hal bedzie --
 -- First Table - Informacje o firmie samochodowej(np.BMW, Wolkswagen) oraz gdzie sie znajduja ich oddzialy --
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Car_Company_Data(
+CREATE TABLE IF NOT EXISTS Car_Company_Data(
     car_company_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     company_name VARCHAR(50) NOT NULL,
     city VARCHAR(100) NOT NULL,
@@ -32,7 +37,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Car_Company_Data(
     COLLATE 'utf8_general_ci';
 
 -- Second Table - informacje o konkternej hali w konkretnej firmie(powierzchnia,liczba pracownikow, oraz znak hali(token)) --
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Industrial_Hall_Data(
+CREATE TABLE IF NOT EXISTS Industrial_Hall_Data(
     industrial_hall_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     car_company_id INT UNSIGNED NOT NULL,
     industrial_hall_token VARCHAR(25) NOT NULL,
@@ -43,7 +48,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Industrial_Hall_Data(
     COLLATE 'utf8_general_ci';
 
 -- Third Table - informacje o managerze i o tym jaka hale pilnuje --
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Manager(
+CREATE TABLE IF NOT EXISTS Manager(
     manager_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     manager_name VARCHAR(50) NOT NULL,
     manager_surname VARCHAR(50) NOT NULL,
@@ -58,7 +63,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Manager(
     COLLATE 'utf8_general_ci';
     
 -- Fourth Table - informacje o przelozonym oraz o tym(INNER JOIN pokaze nam jaka hale powinien pilnowac) -- 
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Deputy_Manager(
+CREATE TABLE IF NOT EXISTS Deputy_Manager(
     deputy_manager_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     deputy_manager_name VARCHAR(50) NOT NULL,
     deputy_manager_surname VARCHAR(50) NOT NULL,
@@ -71,7 +76,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Deputy_Manager(
     COLLATE 'utf8_general_ci';    
     
 -- Fifth Table - informacje o firmie ktora bedzie przeprowadzac remonto --
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Renovation_Company_Data(
+CREATE TABLE IF NOT EXISTS Renovation_Company_Data(
     renovation_company_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     renovation_company_name VARCHAR(50) NOT NULL,
     ceo_name VARCHAR(25) NOT NULL DEFAULT 'No data available',
@@ -82,7 +87,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Renovation_Company_Data(
     COLLATE 'utf8_general_ci';    
   
 -- Sixth Table - informacje o remoncie, od kiedy do kiedy powinien byc --  
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Data_Of_Renovation(
+CREATE TABLE IF NOT EXISTS Data_Of_Renovation(
     renovation_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     industrial_hall_id INT UNSIGNED NOT NULL,
     renovation_company_id INT UNSIGNED NOT NULL,
@@ -94,15 +99,99 @@ CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Data_Of_Renovation(
     COLLATE 'utf8_general_ci';   
 
 -- Seventh Table zbiora tablicza mowiaca nam kiedy remont bedzie sie na pewno odbywac i kto bedzie go pilnowac --
-CREATE TABLE IF NOT EXISTS Renovation_Managment_System.Supervisior_Data(
+CREATE TABLE IF NOT EXISTS Supervisior_Data(
     supervisior_id VARCHAR(50) NOT NULL,
     work_start DATE DEFAULT '1000-01-01',
     work_end DATE DEFAULT '1000-01-01',
     work_done BOOLEAN
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';
-    
-INSERT INTO Renovation_Managment_System.Car_Company_Data VALUES
+
+-- PROCEDURES -- 
+-- 1 
+DELIMITER //
+CREATE PROCEDURE AddingValuesIndustrialHallData_if1 ()
+BEGIN
+INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
+SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-1') as Wynik
+FROM car_company_data;
+END//
+DELIMITER ;
+
+-- 2
+DELIMITER //
+CREATE PROCEDURE AddingValuesIndustrialHallData_if2 ()
+BEGIN
+INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
+SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-2') as Wynik
+FROM car_company_data
+WHERE num_of_industrial_halls > 1;
+END//
+DELIMITER ;
+
+-- 3
+DELIMITER //
+CREATE PROCEDURE AddingValuesIndustrialHallData_if3 ()
+BEGIN
+INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
+SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-3') as Wynik
+FROM car_company_data
+WHERE num_of_industrial_halls > 2;
+END//
+DELIMITER ;
+
+-- 4
+DELIMITER //
+CREATE PROCEDURE AddingValueIndustrialHallDatas_if4 ()
+BEGIN
+INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
+SELECT car_company_id, CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-4') as Wynik
+FROM car_company_data
+WHERE num_of_industrial_halls > 3;
+END//
+DELIMITER ;
+
+-- 5
+DELIMITER //
+CREATE PROCEDURE AddingValueArea (IN id INT, IN size INT, IN n_of_emp INT)
+BEGIN
+UPDATE industrial_hall_data
+SET 
+area = size,
+num_of_employees = n_of_emp
+WHERE industrial_hall_id = id;
+END//
+DELIMITER ;
+
+-- 6
+DELIMITER //
+CREATE PROCEDURE AddingValueManagerData (IN id INT,IN nm VARCHAR(50), IN sn VARCHAR(50), IN ag INT, IN pn VARCHAR(50), IN sh DATE,IN eh DATE)
+BEGIN
+UPDATE manager
+SET 
+manager_name = nm,
+manager_surname = sn,
+manager_age = ag,
+manager_phone_number = pn,
+manager_start_holiday = sh,
+manager_end_holiday = eh
+WHERE   manager_id=id;
+END//
+DELIMITER ;
+
+-- 7
+DELIMITER //
+CREATE PROCEDURE AddingValueManager()
+BEGIN
+INSERT INTO manager(industrial_hall_token,industrial_hall_id)
+SELECT industrial_hall_token,industrial_hall_id 
+FROM industrial_hall_data;
+END//
+DELIMITER ;
+-- END OF PROCEDURES ----------------------------------------------------------------------------------------
+ 
+-- INSERTING VALUES TO ALL TABLES ------------------------------------------------------------------------- 
+INSERT INTO Car_Company_Data VALUES
 (NULL,'Volkswagen','Poznan','60-655',2),
 (NULL,'Volkswagen','Wrzesnia','60-657',1),
 (NULL,'Volkswagen','Polkowice','59-100',1),
@@ -119,160 +208,82 @@ INSERT INTO Renovation_Managment_System.Car_Company_Data VALUES
 (NULL,'Mitsubishi','Gdynia','81-005',2),
 (NULL,'Mitsubishi','Kalisz','62-800',2);
 
--- PROCEDURY -- 
 
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValues_if1 ()
-BEGIN
-INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
-SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-1') as Wynik
-FROM car_company_data;
-END//
-DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValues_if2 ()
-BEGIN
-INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
-SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-2') as Wynik
-FROM car_company_data
-WHERE num_of_industrial_halls > 1;
-END//
-DELIMITER ;
+Call AddingValuesIndustrialHallData_if1();
+ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
+Call AddingValuesIndustrialHallData_if2();
+ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
+Call AddingValuesIndustrialHallData_if3();
+ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
+Call AddingValueIndustrialHallDatas_if4();
 
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValues_if3 ()
-BEGIN
-INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
-SELECT car_company_id,CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-3') as Wynik
-FROM car_company_data
-WHERE num_of_industrial_halls > 2;
-END//
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValues_if4 ()
-BEGIN
-INSERT INTO industrial_hall_data(car_company_id,industrial_hall_token)
-SELECT car_company_id, CONCAT(LEFT(company_name,1) ,LEFT(city,3), RIGHT(post_code,2),'-4') as Wynik
-FROM car_company_data
-WHERE num_of_industrial_halls > 3;
-END//
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValueArea (IN id INT, IN size INT, IN n_of_emp INT)
-BEGIN
 UPDATE industrial_hall_data
-SET 
-area = size,
-num_of_employees = n_of_emp
-WHERE industrial_hall_id = id;
-END//
-DELIMITER ;
-
--- KONIEC PROCEDUR ----------------------------------------------------------------------------------------
-
-Call renovation_managment_system.AddingValues_if1();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
-Call renovation_managment_system.AddingValues_if2();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
-Call renovation_managment_system.AddingValues_if3();
-ALTER TABLE renovation_managment_system.industrial_hall_data AUTO_INCREMENT = 1;
-Call renovation_managment_system.AddingValues_if4();
-
-UPDATE renovation_managment_system.industrial_hall_data
 SET industrial_hall_token = UPPER(industrial_hall_token);
 
+CALL AddingValueArea(1,50,8000);
+CALL AddingValueArea(2,39,7000);
+CALL AddingValueArea(3,20,3000);
+CALL AddingValueArea(4,15,2000);
+CALL AddingValueArea(5,16,15000);
+CALL AddingValueArea(6,18,5000);
+CALL AddingValueArea(7,21,800);
+CALL AddingValueArea(8,10,300);
+CALL AddingValueArea(9,8,600);
+CALL AddingValueArea(10,13,300);
+CALL AddingValueArea(11,14,700);
+CALL AddingValueArea(12,16,1500);
+CALL AddingValueArea(13,19,2000);
+CALL AddingValueArea(14,22,2300);
+CALL AddingValueArea(15,27,3400);
+CALL AddingValueArea(16,26,8000);
+CALL AddingValueArea(17,24,9100);
+CALL AddingValueArea(18,22,11000);
+CALL AddingValueArea(19,20,2300);
+CALL AddingValueArea(20,16,10300);
+CALL AddingValueArea(21,17,500);
+CALL AddingValueArea(22,19,300);
+CALL AddingValueArea(23,30,1000);
+CALL AddingValueArea(24,21,4800);
+CALL AddingValueArea(25,35,2200);
+CALL AddingValueArea(26,43,700);
+CALL AddingValueArea(27,40,950);
+CALL AddingValueArea(28,45,13400);
+CALL AddingValueArea(29,60,5300);
 
-Call renovation_managment_system.AddingValueArea(1,50,8000);
-Call renovation_managment_system.AddingValueArea(2,39,7000);
-Call renovation_managment_system.AddingValueArea(3,20,3000);
-Call renovation_managment_system.AddingValueArea(4,15,2000);
-Call renovation_managment_system.AddingValueArea(5,16,15000);
-Call renovation_managment_system.AddingValueArea(6,18,5000);
-Call renovation_managment_system.AddingValueArea(7,21,800);
-Call renovation_managment_system.AddingValueArea(8,10,300);
-Call renovation_managment_system.AddingValueArea(9,8,600);
-Call renovation_managment_system.AddingValueArea(10,13,300);
-Call renovation_managment_system.AddingValueArea(11,14,700);
-Call renovation_managment_system.AddingValueArea(12,16,1500);
-Call renovation_managment_system.AddingValueArea(13,19,2000);
-Call renovation_managment_system.AddingValueArea(14,22,2300);
-Call renovation_managment_system.AddingValueArea(15,27,3400);
-Call renovation_managment_system.AddingValueArea(16,26,8000);
-Call renovation_managment_system.AddingValueArea(17,24,9100);
-Call renovation_managment_system.AddingValueArea(18,22,11000);
-Call renovation_managment_system.AddingValueArea(19,20,2300);
-Call renovation_managment_system.AddingValueArea(20,16,10300);
-Call renovation_managment_system.AddingValueArea(21,17,500);
-Call renovation_managment_system.AddingValueArea(22,19,300);
-Call renovation_managment_system.AddingValueArea(23,30,1000);
-Call renovation_managment_system.AddingValueArea(24,21,4800);
-Call renovation_managment_system.AddingValueArea(25,35,2200);
-Call renovation_managment_system.AddingValueArea(26,43,700);
-Call renovation_managment_system.AddingValueArea(27,40,950);
-Call renovation_managment_system.AddingValueArea(28,45,13400);
-Call renovation_managment_system.AddingValueArea(29,60,5300);
+CALL AddingValueManager();
 
+CALL AddingValueManagerData(1,'Schmitt','Carine ',20,'508555955','2022-10-01','2022-10-07');
+CALL AddingValueManagerData(2,'King','Jean',30,'617555855','2022-10-08','2022-10-15');
+CALL AddingValueManagerData(3,'Nelson','Susan',42,'412642550','2022-10-16','2022-10-23');
+CALL AddingValueManagerData(4,'Bergulfsen','Jonas',31,'089703455','2022-10-24','2022-10-31');
+CALL AddingValueManagerData(5,'Labrune','Janine',28,'422121555','2022-11-01','2022-11-08');
+CALL AddingValueManagerData(6,'Keitel','Roland',25,'312049195','2022-11-09','2022-11-16');
+CALL AddingValueManagerData(7,'Piestrzeniewicz','Zbyszek',26,'030007455','2022-11-17','2022-11-24');
+CALL AddingValueManagerData(8,'Freyre','Diego',45,'702555183','2022-11-25','2022-11-30');
+CALL AddingValueManagerData(9,'Murphy','Julie',55,'039520455','2022-12-01','2022-12-08');
+CALL AddingValueManagerData(10,'Saveley','Mary',44,'415555145','2022-12-09','2022-12-15');
+CALL AddingValueManagerData(11,'Rancé','Martin',23,'642755536','2022-12-20','2022-12-27');
+CALL AddingValueManagerData(12,'Frick','Michael',33,'499669025','2022-12-02','2022-12-05');
+CALL AddingValueManagerData(13,'Taylor','Leslie',44,'312049195','2022-05-01','2022-05-09');
+CALL AddingValueManagerData(14,'Cassidy','Dean',55,'030007455','2022-05-10','2022-05-17');
+CALL AddingValueManagerData(15,'Walker','Brydey',66,'981443655','2022-05-20','2022-05-27');
+CALL AddingValueManagerData(16,'Michal','Kowalski',56,'508555955','2022-05-02','2022-05-20');
+CALL AddingValueManagerData(17,'Citeaux','Frédérique',67, '650555138','2022-06-01','2022-06-20');
+CALL AddingValueManagerData(18,'Gao','Mike',34,'649125555','2022-06-05','2022-06-12');
+CALL AddingValueManagerData(19,'Saavedra','Eduardo ',23,'201555935','2022-06-21','2022-06-28');
+CALL AddingValueManagerData(20,'Young','Mary',48,'358980455','2022-06-14','2022-06-21');
+CALL AddingValueManagerData(21,'Kloss','Horst ',49,'215555469','2022-07-01','2022-07-10');
+CALL AddingValueManagerData(22,'Ibsen','Palle',50,'215555436','2022-07-14','2022-07-21');
+CALL AddingValueManagerData(23,'Camino','Alejandra',51,'296755458','2022-07-22','2022-07-29');
+CALL AddingValueManagerData(24,'Fresnière','Jean ',20,'215503555','2022-07-23','2022-07-30');
+CALL AddingValueManagerData(25,'Thompson','Valarie',36,'603555864','2022-08-01','2022-08-10');
+CALL AddingValueManagerData(26,'Bennett','Helen ',38,'617555855','2022-08-15','2022-08-22');
+CALL AddingValueManagerData(27,'Roulet','Annette' ,39,'656295556','2022-08-25','2022-08-31');
+CALL AddingValueManagerData(28,'Messner','Renate ',43,'071155536','2022-09-01','2022-09-20');
+CALL AddingValueManagerData(29,'Michal','Sidor',22,'567834212','2022-09-21','2022-09-30');
 
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValueManager()
-BEGIN
-INSERT INTO manager(industrial_hall_token,industrial_hall_id)
-SELECT industrial_hall_token,industrial_hall_id 
-FROM industrial_hall_data;
-END//
-DELIMITER ;
-
-CALL renovation_managment_system.AddingValueManager();
-
-DELIMITER //
-CREATE PROCEDURE renovation_managment_system.AddingValueManagerData (IN id INT,IN nm VARCHAR(50), IN sn VARCHAR(50), IN ag INT, IN pn VARCHAR(50), IN sh DATE,IN eh DATE)
-BEGIN
-UPDATE manager
-SET 
-manager_name = nm,
-manager_surname = sn,
-manager_age = ag,
-manager_phone_number = pn,
-manager_start_holiday = sh,
-manager_end_holiday = eh
-WHERE   manager_id=id;
-END//
-DELIMITER ;
-
-Call renovation_managment_system.AddingValueManagerData(1,'Schmitt','Carine ',20,'508555955','2022-10-01','2022-10-07');
-Call renovation_managment_system.AddingValueManagerData(2,'King','Jean',30,'617555855','2022-10-08','2022-10-15');
-Call renovation_managment_system.AddingValueManagerData(3,'Nelson','Susan',42,'412642550','2022-10-16','2022-10-23');
-Call renovation_managment_system.AddingValueManagerData(4,'Bergulfsen','Jonas',31,'089703455','2022-10-24','2022-10-31');
-Call renovation_managment_system.AddingValueManagerData(5,'Labrune','Janine',28,'422121555','2022-11-01','2022-11-08');
-Call renovation_managment_system.AddingValueManagerData(6,'Keitel','Roland',25,'312049195','2022-11-09','2022-11-16');
-Call renovation_managment_system.AddingValueManagerData(7,'Piestrzeniewicz','Zbyszek',26,'030007455','2022-11-17','2022-11-24');
-Call renovation_managment_system.AddingValueManagerData(8,'Freyre','Diego',45,'702555183','2022-11-25','2022-11-30');
-Call renovation_managment_system.AddingValueManagerData(9,'Murphy','Julie',55,'039520455','2022-12-01','2022-12-08');
-Call renovation_managment_system.AddingValueManagerData(10,'Saveley','Mary',44,'415555145','2022-12-09','2022-12-15');
-Call renovation_managment_system.AddingValueManagerData(11,'Rancé','Martin',23,'642755536','2022-12-20','2022-12-27');
-Call renovation_managment_system.AddingValueManagerData(12,'Frick','Michael',33,'499669025','2022-12-02','2022-12-05');
-Call renovation_managment_system.AddingValueManagerData(13,'Taylor','Leslie',44,'312049195','2022-05-01','2022-05-09');
-Call renovation_managment_system.AddingValueManagerData(14,'Cassidy','Dean',55,'030007455','2022-05-10','2022-05-17');
-Call renovation_managment_system.AddingValueManagerData(15,'Walker','Brydey',66,'981443655','2022-05-20','2022-05-27');
-Call renovation_managment_system.AddingValueManagerData(16,'Michal','Kowalski',56,'508555955','2022-05-02','2022-05-20');
-Call renovation_managment_system.AddingValueManagerData(17,'Citeaux','Frédérique',67, '650555138','2022-06-01','2022-06-20');
-Call renovation_managment_system.AddingValueManagerData(18,'Gao','Mike',34,'649125555','2022-06-05','2022-06-12');
-Call renovation_managment_system.AddingValueManagerData(19,'Saavedra','Eduardo ',23,'201555935','2022-06-21','2022-06-28');
-Call renovation_managment_system.AddingValueManagerData(20,'Young','Mary',48,'358980455','2022-06-14','2022-06-21');
-Call renovation_managment_system.AddingValueManagerData(21,'Kloss','Horst ',49,'215555469','2022-07-01','2022-07-10');
-Call renovation_managment_system.AddingValueManagerData(22,'Ibsen','Palle',50,'215555436','2022-07-14','2022-07-21');
-Call renovation_managment_system.AddingValueManagerData(23,'Camino','Alejandra',51,'296755458','2022-07-22','2022-07-29');
-Call renovation_managment_system.AddingValueManagerData(24,'Fresnière','Jean ',20,'215503555','2022-07-23','2022-07-30');
-Call renovation_managment_system.AddingValueManagerData(25,'Thompson','Valarie',36,'603555864','2022-08-01','2022-08-10');
-Call renovation_managment_system.AddingValueManagerData(26,'Bennett','Helen ',38,'617555855','2022-08-15','2022-08-22');
-Call renovation_managment_system.AddingValueManagerData(27,'Roulet','Annette' ,39,'656295556','2022-08-25','2022-08-31');
-Call renovation_managment_system.AddingValueManagerData(28,'Messner','Renate ',43,'071155536','2022-09-01','2022-09-20');
-Call renovation_managment_system.AddingValueManagerData(29,'Michal','Sidor',22,'567834212','2022-09-21','2022-09-30');
-
-INSERT INTO renovation_managment_system.deputy_manager(deputy_manager_surname, deputy_manager_name, deputy_manager_phone, deputy_manager_start_holiday, deputy_manager_end_holiday, manager_id)
+INSERT INTO deputy_manager(deputy_manager_surname, deputy_manager_name, deputy_manager_phone, deputy_manager_start_holiday, deputy_manager_end_holiday, manager_id)
 VALUES
 ('Kowalewski','Michal','649553330','2022-07-22','2022-07-31',1),
 ('Snowden','Tony','649555550','2022-07-31','2022-08-02',2),
@@ -303,3 +314,74 @@ VALUES
 ('Cruz','Arnold','632555358','2022-07-02','2022-07-06',27),
 ('Pipps','Georg ','656295552','2022-07-20','2022-08-01',28),
 ('Cartrain','Pascale ','071236725','2022-08-20','2022-08-24',29);
+
+-- I am inserting in four parts because I wanna have diffrent default values situation.
+INSERT INTO renovation_company_data(renovation_company_name,ceo_name,ceo_surname,number_of_employees)
+VALUES
+('Raion','Mateusz','Kowalewski',12),
+('Mikronika','Mariusz','Bonczyk',20),
+('EIStat','Andrzej','Adnrzejewski',3);
+INSERT INTO renovation_company_data(renovation_company_name,ceo_name,ceo_surname)
+VALUES
+('GoProAutomatyka','Drapikowski','Bak'),
+('Mikrobest','Wiktor','Dragan');
+INSERT INTO renovation_company_data(renovation_company_name,ceo_surname,number_of_employees)
+VALUES
+('AP Automatyka','Ksiezak',17),
+('OMERATO','Alehin',8),
+('SCD AUTOMATION','Kasparov',5),
+('rob-tech','Kacper',9),
+('ASC Technologie','Jaskolka',11);
+ INSERT INTO renovation_company_data(renovation_company_name,ceo_surname)
+VALUES
+('B&R Automatyka Przemyslowa','Karpisz'),
+('ProcessDiagnosticCompany','Wiktorowicz'),
+('AFK Automatyka','Makar'),
+('PLC','Molopon'),
+('AutomotionCompression','Ginner');
+
+-- -------- FINISH OF INSERT STATMENTS -------------------------
+
+-- -------- CREATING VIEWS -------------------------------------
+-- 1
+CREATE VIEW manager_company_view AS
+SELECT company_name, manager_name, manager_surname
+FROM manager INNER JOIN industrial_hall_data
+ON manager.industrial_hall_token = industrial_hall_data.industrial_hall_token
+INNER JOIN car_company_data
+ON industrial_hall_data.car_company_id = car_company_data.car_company_id
+WHERE company_name = 'BMW';
+
+-- 2
+CREATE VIEW deputy_manager_harder_task AS
+SELECT deputy_manager_name, deputy_manager_surname, num_of_employees, city
+FROM deputy_manager INNER JOIN  manager 
+ON deputy_manager.manager_id = manager.manager_id 
+INNER JOIN industrial_hall_data 
+ON manager.industrial_hall_token = industrial_hall_data.industrial_hall_token
+INNER JOIN car_company_data 
+ON industrial_hall_data.car_company_id = car_company_data.car_company_id 
+WHERE post_code LIKE '%00%' AND area BETWEEN 10 AND 35
+GROUP BY num_of_employees 
+LIMIT 5;
+
+-- 3
+CREATE VIEW InformationVolkswagen AS
+SELECT SUM(industrial_hall_data.num_of_employees) AS AllEmplyessVW,  SUM(industrial_hall_data.area) AS WholeAreaVW, COUNT(car_company_data.num_of_industrial_halls) AS NumberOfIndustrialHallsVW
+FROM industrial_hall_data INNER JOIN car_company_data
+ON industrial_hall_data.car_company_id = car_company_data.car_company_id
+WHERE car_company_data.company_name LIKE '%V%';
+
+-- 4
+CREATE VIEW InformationBMW AS
+SELECT SUM(industrial_hall_data.num_of_employees) AS AllEmplyessBMW,  SUM(industrial_hall_data.area) AS WholeAreaBMW, COUNT(car_company_data.num_of_industrial_halls) AS NumberOfIndustrialHallsBMW
+FROM industrial_hall_data INNER JOIN car_company_data
+ON industrial_hall_data.car_company_id = car_company_data.car_company_id
+WHERE car_company_data.company_name LIKE '%BM%';
+
+-- 5
+CREATE VIEW InformationMitsubishi AS
+SELECT SUM(industrial_hall_data.num_of_employees) AS AllEmplyessMB,  SUM(industrial_hall_data.area) AS WholeAreaMB, COUNT(car_company_data.num_of_industrial_halls) AS NumberOfIndustrialHallsMB
+FROM industrial_hall_data INNER JOIN car_company_data
+ON industrial_hall_data.car_company_id = car_company_data.car_company_id
+WHERE car_company_data.company_name LIKE '%Mi%';
