@@ -14,6 +14,9 @@ DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if3; -- 3
 DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValues_if4; -- 4
 DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueArea; -- 5
 DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager; -- 6
+DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager; -- 7
+DROP PROCEDURE IF EXISTS renovation_managment_system.SupervisiorName; -- 8
+DROP PROCEDURE IF EXISTS renovation_managment_system.Holidays; -- 9
 
 DROP VIEW IF EXISTS renovation_managment_system.manager_company_view; -- 1
 DROP VIEW IF EXISTS renovation_managment_system.deputy_manager_harder_task; -- 2
@@ -94,6 +97,12 @@ CREATE TABLE IF NOT EXISTS Data_Of_Renovation(
     start_data DATE DEFAULT '1000-01-01',
     end_data DATE DEFAULT '1000-01-01' ,
     supervisior_id INT UNSIGNED NOT NULL,
+    supervisior_name VARCHAR(100) NOT NULL,
+    supervisior_surname VARCHAR(100) NOT NULL,
+    deputy_supervisior_id INT UNSIGNED NOT NULL,
+    deputy_supervisior_name VARCHAR(100) NOT NULL,
+    deputy_supervisior_surname VARCHAR(100) NOT NULL,
+    whose_watching VARCHAR(100) NOT NULL,
     PRIMARY KEY(renovation_id) 
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';   
@@ -188,6 +197,73 @@ SELECT industrial_hall_token,industrial_hall_id
 FROM industrial_hall_data;
 END//
 DELIMITER ;
+
+-- 8 
+DELIMITER //
+CREATE PROCEDURE SupervisiorName(IN idren INT)
+BEGIN
+       UPDATE data_of_renovation
+       SET supervisior_name = (SELECT manager_name FROM manager INNER JOIN industrial_hall_data 
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+       UPDATE data_of_renovation
+       SET supervisior_surname = (SELECT manager_surname FROM manager INNER JOIN industrial_hall_data 
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+       UPDATE data_of_renovation
+       SET supervisior_id = (SELECT manager_id FROM manager INNER JOIN industrial_hall_data 
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+       UPDATE data_of_renovation
+       SET deputy_supervisior_name = (SELECT deputy_manager_name FROM deputy_manager INNER JOIN manager
+                     ON deputy_manager.manager_id = manager.manager_id INNER JOIN industrial_hall_data
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+       UPDATE data_of_renovation
+       SET deputy_supervisior_surname = (SELECT deputy_manager_surname FROM deputy_manager INNER JOIN manager
+                     ON deputy_manager.manager_id = manager.manager_id INNER JOIN industrial_hall_data
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+       UPDATE data_of_renovation
+       SET deputy_supervisior_id = (SELECT deputy_manager_id FROM deputy_manager INNER JOIN manager
+                     ON deputy_manager.manager_id = manager.manager_id INNER JOIN industrial_hall_data
+                     ON manager.industrial_hall_id = industrial_hall_data.industrial_hall_id INNER JOIN data_of_renovation ON
+                     industrial_hall_data.industrial_hall_id = data_of_renovation.industrial_hall_id
+                     WHERE data_of_renovation.industrial_hall_id = industrial_hall_data.industrial_hall_id AND renovation_id = idren)
+                     WHERE renovation_id = idren;
+END//
+DELIMITER ;
+
+-- 9
+DELIMITER //
+CREATE PROCEDURE Holidays(IN x INT)
+BEGIN
+      IF ((SELECT start_data FROM data_of_renovation WHERE renovation_id = x) > (SELECT manager_start_holiday FROM manager INNER JOIN data_of_renovation ON manager.manager_id = data_of_renovation.supervisior_id WHERE              renovation_id = x) AND
+         (SELECT start_data FROM data_of_renovation WHERE renovation_id = x) < (SELECT manager_end_holiday FROM manager INNER JOIN data_of_renovation ON manager.manager_id = data_of_renovation.supervisior_id WHERE                 renovation_id = x))
+         OR
+         ((SELECT end_data FROM data_of_renovation WHERE renovation_id = x) > (SELECT manager_start_holiday FROM manager INNER JOIN data_of_renovation ON manager.manager_id = data_of_renovation.supervisior_id WHERE    
+         renovation_id = x) AND
+         (SELECT end_data FROM data_of_renovation WHERE renovation_id = x) < (SELECT manager_end_holiday FROM manager INNER JOIN data_of_renovation ON manager.manager_id = data_of_renovation.supervisior_id WHERE 
+         renovation_id = x))
+         THEN
+         UPDATE data_of_renovation
+         SET whose_watching = "DeputyManager";
+      ELSE 
+         UPDATE data_of_renovation
+         SET whose_watching = "Manager";      
+      END IF;   
+END//
+DELIMITER ;
 -- END OF PROCEDURES ----------------------------------------------------------------------------------------
  
 -- INSERTING VALUES TO ALL TABLES ------------------------------------------------------------------------- 
@@ -255,7 +331,7 @@ CALL AddingValueManager();
 
 CALL AddingValueManagerData(1,'Schmitt','Carine ',20,'508555955','2022-10-01','2022-10-07');
 CALL AddingValueManagerData(2,'King','Jean',30,'617555855','2022-10-08','2022-10-15');
-CALL AddingValueManagerData(3,'Nelson','Susan',42,'412642550','2022-10-16','2022-10-23');
+CALL AddingValueManagerData(3,'Nelson','Susan',42,'412642550','2022-01-16','2022-10-23');
 CALL AddingValueManagerData(4,'Bergulfsen','Jonas',31,'089703455','2022-10-24','2022-10-31');
 CALL AddingValueManagerData(5,'Labrune','Janine',28,'422121555','2022-11-01','2022-11-08');
 CALL AddingValueManagerData(6,'Keitel','Roland',25,'312049195','2022-11-09','2022-11-16');
@@ -385,3 +461,32 @@ SELECT SUM(industrial_hall_data.num_of_employees) AS AllEmplyessMB,  SUM(industr
 FROM industrial_hall_data INNER JOIN car_company_data
 ON industrial_hall_data.car_company_id = car_company_data.car_company_id
 WHERE car_company_data.company_name LIKE '%Mi%';
+
+-- FINISH OF CREATING VIEWS -------------------------------------------------------------
+
+-- CREATING FUNCTIONS -------------------------------------------------------------------
+
+-- 1
+DELIMITER //
+CREATE FUNCTION LongestHolidays(manager_start_holiday DATE, manager_end_holiday DATE)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+  DECLARE value_of_days VARCHAR(255); 
+  IF DATEDIFF(manager_end_holiday, manager_start_holiday) > 7 THEN
+     SET value_of_days = 'Too much, you have to back to work';
+  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) < 6 THEN
+     SET value_of_days = 'To less, change you holiday days in database';     
+  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) = 7 THEN
+     SET value_of_days = 'Its perfect, have a nice time';
+  END IF;
+RETURN value_of_days;
+END; //
+DELIMITER ;
+
+-- dodawanie jakiejkolwiek wartosci zeby zobaczyc jak to dziala
+INSERT INTO data_of_renovation(industrial_hall_id,renovation_company_id,start_data,end_data)
+VALUES
+(3,2,'2022-06-20','2022-06-27');
+CALL SupervisiorName(1);
+CALL Holidays(1);
