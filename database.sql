@@ -16,7 +16,6 @@ DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueArea; -- 5
 DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager; -- 6
 DROP PROCEDURE IF EXISTS renovation_managment_system.AddingValueManager; -- 7
 DROP PROCEDURE IF EXISTS renovation_managment_system.SupervisiorName; -- 8
-DROP PROCEDURE IF EXISTS renovation_managment_system.Holidays; -- 9
 
 DROP VIEW IF EXISTS renovation_managment_system.manager_company_view; -- 1
 DROP VIEW IF EXISTS renovation_managment_system.deputy_manager_harder_task; -- 2
@@ -27,8 +26,6 @@ DROP VIEW IF EXISTS renovation_managment_system.InformationMitsubishi; -- 5
 CREATE DATABASE Renovation_Managment_System;
 USE Renovation_Managment_System; -- we do not have to use f.e.: Renovation_Managment_System.Manager
 
--- 29 hal bedzie --
--- First Table - Informacje o firmie samochodowej(np.BMW, Wolkswagen) oraz gdzie sie znajduja ich oddzialy --
 CREATE TABLE IF NOT EXISTS Car_Company_Data(
     car_company_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     company_name VARCHAR(50) NOT NULL,
@@ -39,18 +36,17 @@ CREATE TABLE IF NOT EXISTS Car_Company_Data(
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';
 
--- Second Table - informacje o konkternej hali w konkretnej firmie(powierzchnia,liczba pracownikow, oraz znak hali(token)) --
+
 CREATE TABLE IF NOT EXISTS Industrial_Hall_Data(
     industrial_hall_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     car_company_id INT UNSIGNED NOT NULL,
     industrial_hall_token VARCHAR(25) NOT NULL,
     area INT UNSIGNED NOT NULL,
     num_of_employees INT UNSIGNED NOT NULL,
-    PRIMARY KEY(industrial_hall_id) 
+    PRIMARY KEY(industrial_hall_id)
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';
 
--- Third Table - informacje o managerze i o tym jaka hale pilnuje --
 CREATE TABLE IF NOT EXISTS Manager(
     manager_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     manager_name VARCHAR(50) NOT NULL,
@@ -59,13 +55,13 @@ CREATE TABLE IF NOT EXISTS Manager(
     manager_phone_number VARCHAR(255) DEFAULT 'brak',
     manager_start_holiday DATE DEFAULT '1000-01-01',
     manager_end_holiday DATE DEFAULT '1000-01-01',
+    manager_start_work DATE,
     industrial_hall_token VARCHAR(25) NOT NULL,
     industrial_hall_id INT UNSIGNED NOT NULL,
-    PRIMARY KEY(manager_id) 
+    PRIMARY KEY(manager_id)
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';
     
--- Fourth Table - informacje o przelozonym oraz o tym(INNER JOIN pokaze nam jaka hale powinien pilnowac) -- 
 CREATE TABLE IF NOT EXISTS Deputy_Manager(
     deputy_manager_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     deputy_manager_name VARCHAR(50) NOT NULL,
@@ -73,12 +69,12 @@ CREATE TABLE IF NOT EXISTS Deputy_Manager(
     deputy_manager_phone VARCHAR(100) NOT NULL,
     deputy_manager_start_holiday DATE DEFAULT '1000-01-01',
     deputy_manager_end_holiday DATE DEFAULT '1000-01-01',
+    deputy_manager_start_work DATE,
     manager_id INT UNSIGNED NOT NULL,
-    PRIMARY KEY(deputy_manager_id) 
+    PRIMARY KEY(deputy_manager_id)
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';    
     
--- Fifth Table - informacje o firmie ktora bedzie przeprowadzac remonto --
 CREATE TABLE IF NOT EXISTS Renovation_Company_Data(
     renovation_company_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     renovation_company_name VARCHAR(50) NOT NULL,
@@ -88,8 +84,7 @@ CREATE TABLE IF NOT EXISTS Renovation_Company_Data(
     PRIMARY KEY(renovation_company_id) 
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';    
-  
--- Sixth Table - informacje o remoncie, od kiedy do kiedy powinien byc --  
+   
 CREATE TABLE IF NOT EXISTS Data_Of_Renovation(
     renovation_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     industrial_hall_id INT UNSIGNED NOT NULL,
@@ -103,18 +98,26 @@ CREATE TABLE IF NOT EXISTS Data_Of_Renovation(
     deputy_supervisior_name VARCHAR(100) NOT NULL,
     deputy_supervisior_surname VARCHAR(100) NOT NULL,
     whose_watching VARCHAR(100) NOT NULL,
-    PRIMARY KEY(renovation_id) 
+    PRIMARY KEY(renovation_id)
     )ENGINE = INNODB
     COLLATE 'utf8_general_ci';   
+    
+-- TRIGGERS -------------------------------------------------------------------------------------------------
+DELIMITER $$
+CREATE TRIGGER start_work_mg_trg
+BEFORE UPDATE ON renovation_managment_system.manager
+FOR EACH ROW BEGIN
+SET NEW.manager_start_work = now();
+END
+$$
 
--- Seventh Table zbiora tablicza mowiaca nam kiedy remont bedzie sie na pewno odbywac i kto bedzie go pilnowac --
-CREATE TABLE IF NOT EXISTS Supervisior_Data(
-    supervisior_id VARCHAR(50) NOT NULL,
-    work_start DATE DEFAULT '1000-01-01',
-    work_end DATE DEFAULT '1000-01-01',
-    work_done BOOLEAN
-    )ENGINE = INNODB
-    COLLATE 'utf8_general_ci';
+DELIMITER $$
+CREATE TRIGGER start_work_dmg_trg
+BEFORE INSERT ON renovation_managment_system.deputy_manager
+FOR EACH ROW BEGIN
+SET NEW.deputy_manager_start_work = now();
+END
+$$
 
 -- PROCEDURES -- 
 -- 1 
@@ -265,6 +268,24 @@ BEGIN
 END//
 DELIMITER ;
 -- END OF PROCEDURES ----------------------------------------------------------------------------------------
+-- CREATING FUNCTIONS -------------------------------------------------------------------
+-- 1
+DELIMITER //
+CREATE FUNCTION LongestHolidays(manager_start_holiday DATE, manager_end_holiday DATE)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+BEGIN
+  DECLARE value_of_days VARCHAR(255); 
+  IF DATEDIFF(manager_end_holiday, manager_start_holiday) > 7 THEN
+     SET value_of_days = 'Too much, you have to back to work';
+  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) < 6 THEN
+     SET value_of_days = 'To less, change you holiday days in database';     
+  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) = 7 THEN
+     SET value_of_days = 'Its perfect, have a nice time';
+  END IF;
+RETURN value_of_days;
+END; //
+DELIMITER ;
  
 -- INSERTING VALUES TO ALL TABLES ------------------------------------------------------------------------- 
 INSERT INTO Car_Company_Data VALUES
@@ -283,8 +304,6 @@ INSERT INTO Car_Company_Data VALUES
 (NULL,'Mitsubishi','Torun','87-100',1),
 (NULL,'Mitsubishi','Gdynia','81-005',2),
 (NULL,'Mitsubishi','Kalisz','62-800',2);
-
-
 
 Call AddingValuesIndustrialHallData_if1();
 ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
@@ -415,7 +434,6 @@ VALUES
 ('AFK Automatyka','Makar'),
 ('PLC','Molopon'),
 ('AutomotionCompression','Ginner');
-
 -- -------- FINISH OF INSERT STATMENTS -------------------------
 
 -- -------- CREATING VIEWS -------------------------------------
@@ -462,31 +480,17 @@ FROM industrial_hall_data INNER JOIN car_company_data
 ON industrial_hall_data.car_company_id = car_company_data.car_company_id
 WHERE car_company_data.company_name LIKE '%Mi%';
 
--- FINISH OF CREATING VIEWS -------------------------------------------------------------
+-- ----------------------------------------------------------------------------------------------------------------------------------------
 
--- CREATING FUNCTIONS -------------------------------------------------------------------
-
--- 1
-DELIMITER //
-CREATE FUNCTION LongestHolidays(manager_start_holiday DATE, manager_end_holiday DATE)
-RETURNS VARCHAR(255)
-DETERMINISTIC
-BEGIN
-  DECLARE value_of_days VARCHAR(255); 
-  IF DATEDIFF(manager_end_holiday, manager_start_holiday) > 7 THEN
-     SET value_of_days = 'Too much, you have to back to work';
-  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) < 6 THEN
-     SET value_of_days = 'To less, change you holiday days in database';     
-  ELSEIF DATEDIFF(manager_end_holiday, manager_start_holiday) = 7 THEN
-     SET value_of_days = 'Its perfect, have a nice time';
-  END IF;
-RETURN value_of_days;
-END; //
-DELIMITER ;
-
--- dodawanie jakiejkolwiek wartosci zeby zobaczyc jak to dziala
+-- Calling procedures to check the automatically supervisior adding system. 
 INSERT INTO data_of_renovation(industrial_hall_id,renovation_company_id,start_data,end_data)
 VALUES
 (3,2,'2022-06-20','2022-06-27');
 CALL SupervisiorName(1);
 CALL Holidays(1);
+
+INSERT INTO data_of_renovation(industrial_hall_id,renovation_company_id,start_data,end_data)
+VALUES
+(5,4,'2022-05-13','2022-05-21');
+CALL SupervisiorName(2);
+CALL Holidays(2);
