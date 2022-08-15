@@ -103,6 +103,8 @@ CREATE TABLE IF NOT EXISTS Data_Of_Renovation(
     COLLATE 'utf8_general_ci';   
     
 -- TRIGGERS -------------------------------------------------------------------------------------------------
+-- Before inserting or updating datas of manager/deputy manager(start of working in companie) 
+-- I want to add data, because its simulates the moment when we are adding new worker to system.
 DELIMITER $$
 CREATE TRIGGER start_work_mg_trg
 BEFORE UPDATE ON renovation_managment_system.manager
@@ -120,6 +122,8 @@ END
 $$
 
 -- PROCEDURES -- 
+-- First four procedurees(if1,if2,if3,if4) is used to create token for industrial hall. In one branch we could have 4 halls.
+-- Patter of creating token: First letter of company_name + First three letters of city + last to numbers of postcode + number of industriall hall.
 -- 1 
 DELIMITER //
 CREATE PROCEDURE AddingValuesIndustrialHallData_if1 ()
@@ -202,6 +206,8 @@ END//
 DELIMITER ;
 
 -- 8 
+-- Adding to data_of_renovation supervisior and deputy manager datas. It is important, because in the moment when work start, we want
+-- to know this two persons, f.e: in situation where one would not pick up.
 DELIMITER //
 CREATE PROCEDURE SupervisiorName(IN idren INT)
 BEGIN
@@ -248,6 +254,8 @@ END//
 DELIMITER ;
 
 -- 9
+-- This procedure checks who will be the main supervisior of renovation. It is looking for collision of data work and holidays of \
+-- manager/deputy manager.
 DELIMITER //
 CREATE PROCEDURE Holidays(IN x INT)
 BEGIN
@@ -270,6 +278,8 @@ DELIMITER ;
 -- END OF PROCEDURES ----------------------------------------------------------------------------------------
 -- CREATING FUNCTIONS -------------------------------------------------------------------
 -- 1
+-- This function show us if someone has too long of vacation. If he has more than 7 days, he sends a massage, that you have go back to work
+-- earlier.
 DELIMITER //
 CREATE FUNCTION LongestHolidays(manager_start_holiday DATE, manager_end_holiday DATE)
 RETURNS VARCHAR(255)
@@ -305,6 +315,7 @@ INSERT INTO Car_Company_Data VALUES
 (NULL,'Mitsubishi','Gdynia','81-005',2),
 (NULL,'Mitsubishi','Kalisz','62-800',2);
 
+-- I have to call it like this, because with calling procedures only(without ALTER TABLE) I has problem with auto incrementing.
 Call AddingValuesIndustrialHallData_if1();
 ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
 Call AddingValuesIndustrialHallData_if2();
@@ -313,6 +324,7 @@ Call AddingValuesIndustrialHallData_if3();
 ALTER TABLE industrial_hall_data AUTO_INCREMENT = 1;
 Call AddingValueIndustrialHallDatas_if4();
 
+-- making token to great letters. From Vwro23-1 -> VWRO32-1
 UPDATE industrial_hall_data
 SET industrial_hall_token = UPPER(industrial_hall_token);
 
